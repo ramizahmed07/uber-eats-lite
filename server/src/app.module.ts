@@ -1,6 +1,11 @@
 import * as Joi from 'joi';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
-import { Module } from '@nestjs/common';
+import {
+  MiddlewareConsumer,
+  Module,
+  NestModule,
+  RequestMethod,
+} from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { GraphQLModule } from '@nestjs/graphql';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -8,9 +13,9 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { UsersModule } from './users/users.module';
-import { CommonModule } from './common/common.module';
 import { User } from './users/entities/user.entity';
 import { JwtModule } from './jwt/jwt.module';
+import { JwtMiddleware } from './jwt/jwt.middleware';
 
 const ENV = process.env.NODE_ENV;
 
@@ -19,6 +24,7 @@ const ENV = process.env.NODE_ENV;
     GraphQLModule.forRoot<ApolloDriverConfig>({
       driver: ApolloDriver,
       autoSchemaFile: true,
+      context: ({ req }) => ({ user: req.user }),
     }),
     ConfigModule.forRoot({
       isGlobal: true,
@@ -48,7 +54,6 @@ const ENV = process.env.NODE_ENV;
       entities: [User],
     }),
     UsersModule,
-    CommonModule,
     JwtModule.forRoot({
       secretKey: process.env.SECRET_KEY,
     }),
@@ -56,4 +61,11 @@ const ENV = process.env.NODE_ENV;
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(JwtMiddleware).forRoutes({
+      path: '/graphql',
+      method: RequestMethod.POST,
+    });
+  }
+}
