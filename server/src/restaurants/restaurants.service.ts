@@ -12,6 +12,9 @@ export class RestaurantsService {
     @InjectRepository(Restaurant)
     private readonly restaurantsRepository: Repository<Restaurant>,
   ) {}
+  helloService() {
+    console.log('HELLO RESTAURANTS');
+  }
   getAll(): Promise<Restaurant[]> {
     return this.restaurantsRepository.find();
   }
