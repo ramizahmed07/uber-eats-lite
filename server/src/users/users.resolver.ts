@@ -10,13 +10,15 @@ import { User } from './entities/user.entity';
 import { UsersService } from './users.service';
 import { AuthGuard } from 'src/auth/auth.guard';
 import { AuthUser } from 'src/auth/auth-user.decorator';
+import { UserProfileInput, UserProfileOutput } from './dtos/user-profile.dto';
+import { EditProfileInput, EditProfileOutput } from './dtos/edit-profile.dto';
 
 @Resolver(() => User)
 export class UsersResolver {
   constructor(private readonly usersService: UsersService) {}
 
-  @Query(() => User)
   @UseGuards(AuthGuard)
+  @Query(() => User)
   me(@AuthUser() user: User) {
     return user;
   }
@@ -29,5 +31,20 @@ export class UsersResolver {
   @Mutation(() => LoginOutput)
   async login(@Args('input') loginInput: LoginInput): Promise<LoginOutput> {
     return this.usersService.login(loginInput);
+  }
+
+  @UseGuards(AuthGuard)
+  @Query(() => UserProfileOutput)
+  userProfile(@Args() userProfileInput: UserProfileInput) {
+    return this.usersService.getUserProfile(userProfileInput);
+  }
+
+  @UseGuards(AuthGuard)
+  @Mutation(() => EditProfileOutput)
+  editProfile(
+    @AuthUser() user: User,
+    @Args('input') editProfileInput: EditProfileInput,
+  ) {
+    return this.usersService.editUserProfile(user.id, editProfileInput);
   }
 }
