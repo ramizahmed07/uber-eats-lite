@@ -6,14 +6,18 @@ import { CreateAccountInput } from './dtos/create-account.dto';
 import { LoginInput, LoginOutput } from './dtos/login.dto';
 import { User } from './entities/user.entity';
 import { JwtService } from 'src/jwt/jwt.service';
+import { Verification } from './entities/verification.entity';
 import { UserProfileInput, UserProfileOutput } from './dtos/user-profile.dto';
 import { EditProfileInput, EditProfileOutput } from './dtos/edit-profile.dto';
+import { VerifyEmailInput, VerifyEmailOutput } from './dtos/verify-email.dto';
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectRepository(User)
     private readonly usersRepository: Repository<User>,
+    @InjectRepository(Verification)
+    private readonly verificationsRepository: Repository<Verification>,
     private readonly jwtService: JwtService,
   ) {}
 
@@ -22,8 +26,13 @@ export class UsersService {
       const user = await this.usersRepository.findOne({ where: { email } });
       if (user) return { ok: false, error: 'User already exists' };
 
-      await this.usersRepository.save(
+      const newUser = await this.usersRepository.save(
         this.usersRepository.create({ email, password, role }),
+      );
+      await this.verificationsRepository.save(
+        this.verificationsRepository.create({
+          user: newUser,
+        }),
       );
       return { ok: true };
     } catch (error) {
@@ -33,7 +42,10 @@ export class UsersService {
 
   async login({ email, password }: LoginInput): Promise<LoginOutput> {
     try {
-      const user = await this.usersRepository.findOne({ where: { email } });
+      const user = await this.usersRepository.findOne({
+        where: { email },
+        select: ['password', 'id'],
+      });
       if (!user) return { ok: false, error: 'User not found' };
       const isPasswordCorrect = await user.checkPassword(password);
 
@@ -66,16 +78,40 @@ export class UsersService {
   }
 
   async editUserProfile(
-    userId: number,
+    user: User,
     { email, password }: EditProfileInput,
   ): Promise<EditProfileOutput> {
     try {
-      const user = await this.usersRepository.findOne({
-        where: { id: userId },
-      });
-      if (email) user.email = email;
-      if (password) user.password = password;
+      if (email) {
+        user.email = email;
+        user.verified = false;
+        await this.verificationsRepository.save(
+          this.verificationsRepository.create({ user }),
+        );
+      }
+      if (password) {
+        user.password = password;
+      }
       await this.usersRepository.save(user);
+      return { ok: true };
+    } catch (error) {
+      return { ok: false, error };
+    }
+  }
+
+  async verifyEmail({ code }: VerifyEmailInput): Promise<VerifyEmailOutput> {
+    try {
+      const verification = await this.verificationsRepository.findOne({
+        where: { code },
+        relations: ['user'],
+      });
+
+      if (!verification) return { ok: false, error: 'Incorrect code' };
+
+      await this.usersRepository.update(verification.user.id, {
+        verified: true,
+      });
+      await this.verificationsRepository.delete(verification.id);
       return { ok: true };
     } catch (error) {
       return { ok: false, error };

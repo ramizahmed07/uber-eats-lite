@@ -16,6 +16,7 @@ import { UsersModule } from './users/users.module';
 import { User } from './users/entities/user.entity';
 import { JwtModule } from './jwt/jwt.module';
 import { JwtMiddleware } from './jwt/jwt.middleware';
+import { Verification } from './users/entities/verification.entity';
 
 const ENV = process.env.NODE_ENV;
 
@@ -51,7 +52,7 @@ const ENV = process.env.NODE_ENV;
       database: process.env.DB_NAME,
       synchronize: ENV !== 'production',
       logging: true,
-      entities: [User],
+      entities: [User, Verification],
     }),
     UsersModule,
     JwtModule.forRoot({
