@@ -17,6 +17,7 @@ import { User } from './users/entities/user.entity';
 import { JwtModule } from './jwt/jwt.module';
 import { JwtMiddleware } from './jwt/jwt.middleware';
 import { Verification } from './users/entities/verification.entity';
+import { MailModule } from './mail/mail.module';
 
 const ENV = process.env.NODE_ENV;
 
@@ -41,6 +42,9 @@ const ENV = process.env.NODE_ENV;
         DB_PASSWORD: Joi.string().required(),
         DB_NAME: Joi.string().required(),
         SECRET_KEY: Joi.string().required(),
+        SENDGRID_API_KEY: Joi.string().required(),
+        TEMPLATE_ID: Joi.string().required(),
+        SENDGRID_SENDER_EMAIL: Joi.string().required().email(),
       }),
     }),
     TypeOrmModule.forRoot({
@@ -51,13 +55,14 @@ const ENV = process.env.NODE_ENV;
       password: process.env.DB_PASSWORD,
       database: process.env.DB_NAME,
       synchronize: ENV !== 'production',
-      logging: true,
+      logging: false,
       entities: [User, Verification],
     }),
     UsersModule,
     JwtModule.forRoot({
       secretKey: process.env.SECRET_KEY,
     }),
+    MailModule,
   ],
   controllers: [AppController],
   providers: [AppService],

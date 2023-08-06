@@ -10,6 +10,7 @@ import { Verification } from './entities/verification.entity';
 import { UserProfileInput, UserProfileOutput } from './dtos/user-profile.dto';
 import { EditProfileInput, EditProfileOutput } from './dtos/edit-profile.dto';
 import { VerifyEmailInput, VerifyEmailOutput } from './dtos/verify-email.dto';
+import { MailService } from 'src/mail/mail.service';
 
 @Injectable()
 export class UsersService {
@@ -19,6 +20,7 @@ export class UsersService {
     @InjectRepository(Verification)
     private readonly verificationsRepository: Repository<Verification>,
     private readonly jwtService: JwtService,
+    private readonly mailService: MailService,
   ) {}
 
   async createAccount({ email, password, role }: CreateAccountInput) {
@@ -29,11 +31,12 @@ export class UsersService {
       const newUser = await this.usersRepository.save(
         this.usersRepository.create({ email, password, role }),
       );
-      await this.verificationsRepository.save(
+      const verification = await this.verificationsRepository.save(
         this.verificationsRepository.create({
           user: newUser,
         }),
       );
+      await this.mailService.sendVerificationEmail(email, verification.code);
       return { ok: true };
     } catch (error) {
       return { ok: false, error: "Couldn't create account" };
@@ -83,11 +86,14 @@ export class UsersService {
   ): Promise<EditProfileOutput> {
     try {
       if (email) {
+        const exists = await this.usersRepository.findOne({ where: { email } });
+        if (exists) return { ok: false, error: 'Email is already taken' };
         user.email = email;
         user.verified = false;
-        await this.verificationsRepository.save(
+        const { code } = await this.verificationsRepository.save(
           this.verificationsRepository.create({ user }),
         );
+        await this.mailService.sendVerificationEmail(email, code);
       }
       if (password) {
         user.password = password;
