@@ -54,6 +54,7 @@ export class UsersService {
 
       if (!isPasswordCorrect)
         return { ok: false, error: 'Incorrect email or password' };
+
       const token = this.jwtService.sign({ id: user.id });
       return { ok: true, token };
     } catch (error) {
@@ -65,19 +66,28 @@ export class UsersService {
     userId: id,
   }: UserProfileInput): Promise<UserProfileOutput> {
     try {
-      const user = await this.findById(id);
-      if (!user) return { ok: false, error: 'User not found' };
+      const { ok, user } = await this.findById(id);
+      if (!ok) return { ok: false, error: 'User not found' };
       return {
         ok: true,
         user,
       };
     } catch (error) {
-      return { ok: false, error };
+      return { ok: false, error: "Couldn't get profile." };
     }
   }
 
-  findById(id: number): Promise<User> {
-    return this.usersRepository.findOne({ where: { id } });
+  async findById(id: number): Promise<UserProfileOutput> {
+    try {
+      const user = await this.usersRepository.findOneOrFail({
+        where: {
+          id,
+        },
+      });
+      return { ok: true, user };
+    } catch (error) {
+      return { ok: false, error: 'User not found' };
+    }
   }
 
   async editUserProfile(
@@ -101,7 +111,7 @@ export class UsersService {
       await this.usersRepository.save(user);
       return { ok: true };
     } catch (error) {
-      return { ok: false, error };
+      return { ok: false, error: 'Could not update profile' };
     }
   }
 
@@ -120,7 +130,7 @@ export class UsersService {
       await this.verificationsRepository.delete(verification.id);
       return { ok: true };
     } catch (error) {
-      return { ok: false, error };
+      return { ok: false, error: 'Could not verify email.' };
     }
   }
 }

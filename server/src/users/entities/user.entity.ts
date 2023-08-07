@@ -2,9 +2,9 @@ import * as bcrypt from 'bcrypt';
 import { Field, ObjectType, registerEnumType } from '@nestjs/graphql';
 import { BeforeInsert, BeforeUpdate, Column, Entity } from 'typeorm';
 import { InternalServerErrorException } from '@nestjs/common';
+import { IsEmail, IsEnum } from 'class-validator';
 
 import { CoreEntity } from 'src/common/entities/core.entity';
-import { IsEmail, IsEnum } from 'class-validator';
 
 enum UserRole {
   Client,
