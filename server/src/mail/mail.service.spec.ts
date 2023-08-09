@@ -72,14 +72,18 @@ describe('MailService', () => {
 
   describe('send', () => {
     it('should send email', async () => {
+      const sendSpy = jest
+        .spyOn(sendgridService, 'send')
+        .mockImplementation(async () => Promise.resolve([true as any, {}]));
+
       const result = await service.send(sendArgs);
       expect(configService.get).toHaveBeenNthCalledWith(
         1,
         'SENDGRID_SENDER_EMAIL',
       );
       expect(configService.get).toHaveBeenNthCalledWith(2, 'TEMPLATE_ID');
-      expect(sendgridService.send).toHaveBeenCalledTimes(1);
-      expect(sendgridService.send).toHaveBeenCalledWith(
+      expect(sendSpy).toHaveBeenCalledTimes(1);
+      expect(sendSpy).toHaveBeenCalledWith(
         {
           from: {
             name: 'Uber Eats',
@@ -95,6 +99,12 @@ describe('MailService', () => {
       );
 
       expect(result).toEqual({ ok: true });
+    });
+
+    it('should fail on exception', async () => {
+      jest.spyOn(sendgridService, 'send').mockRejectedValue(new Error());
+      const result = await service.send(sendArgs);
+      expect(result).toEqual({ ok: false, error: expect.any(Object) });
     });
   });
 });
