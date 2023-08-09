@@ -6,6 +6,7 @@ import * as jwt from 'jsonwebtoken';
 const TEST_SECRET_KEY = 'test-key';
 const TOKEN = 'TOKEN';
 const payload = { id: 1 };
+
 jest.mock('jsonwebtoken', () => ({
   sign: jest.fn(() => TOKEN),
   verify: jest.fn(() => payload),

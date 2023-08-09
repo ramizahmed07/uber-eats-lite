@@ -16,7 +16,7 @@ export class MailService {
     private readonly config: ConfigService,
   ) {}
 
-  #send({ toEmail, dynamicTemplateData }: SendEmailInput) {
+  async send({ toEmail, dynamicTemplateData }: SendEmailInput) {
     try {
       const sendersEmail = this.config.get('SENDGRID_SENDER_EMAIL');
       const msg: MailDataRequired = {
@@ -31,14 +31,16 @@ export class MailService {
         dynamicTemplateData,
       };
 
-      return this.sendgridService.send(msg, false);
+      await this.sendgridService.send(msg, false);
+      return { ok: true };
     } catch (error) {
-      console.log(error);
+      return { ok: false, error };
     }
   }
 
   sendVerificationEmail(toEmail: string, code: string) {
-    return this.#send({
+    console.log('Test args', toEmail, code);
+    return this.send({
       toEmail,
       dynamicTemplateData: {
         subject: 'Thank you for signing up!',
