@@ -39,7 +39,6 @@ export class MailService {
   }
 
   sendVerificationEmail(toEmail: string, code: string) {
-    console.log('Test args', toEmail, code);
     return this.send({
       toEmail,
       dynamicTemplateData: {

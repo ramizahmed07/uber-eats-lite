@@ -34,7 +34,6 @@ export class UsersResolver {
     return this.usersService.login(loginInput);
   }
 
-  @UseGuards(AuthGuard)
   @Query(() => UserProfileOutput)
   userProfile(@Args() userProfileInput: UserProfileInput) {
     return this.usersService.getUserProfile(userProfileInput);

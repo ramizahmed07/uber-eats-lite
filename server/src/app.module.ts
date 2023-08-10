@@ -18,6 +18,7 @@ import { JwtModule } from './jwt/jwt.module';
 import { JwtMiddleware } from './jwt/jwt.middleware';
 import { Verification } from './users/entities/verification.entity';
 import { MailModule } from './mail/mail.module';
+import { DatabaseModule } from './database/database.module';
 
 const ENV = process.env.NODE_ENV;
 
@@ -55,7 +56,7 @@ const ENV = process.env.NODE_ENV;
       password: process.env.DB_PASSWORD,
       database: process.env.DB_NAME,
       synchronize: ENV !== 'production',
-      logging: false,
+      logging: ENV === 'development',
       entities: [User, Verification],
     }),
     UsersModule,
@@ -63,6 +64,7 @@ const ENV = process.env.NODE_ENV;
       secretKey: process.env.SECRET_KEY,
     }),
     MailModule,
+    DatabaseModule,
   ],
   controllers: [AppController],
   providers: [AppService],
