@@ -33,7 +33,7 @@ const mockedMailService = () => ({
 describe('UsersService', () => {
   let service: UsersService;
   let usersRepository: MockRepository<User>;
-  let verificationRepository: MockRepository<Verification>;
+  let verificationsRepository: MockRepository<Verification>;
   let mailService: MailService;
   let jwtService: JwtService;
 
@@ -54,7 +54,7 @@ describe('UsersService', () => {
     mailService = module.get(MailService);
     jwtService = module.get(JwtService);
     usersRepository = module.get(getRepositoryToken(User));
-    verificationRepository = module.get(getRepositoryToken(Verification));
+    verificationsRepository = module.get(getRepositoryToken(Verification));
   });
 
   it('should be defined', () => {
@@ -83,21 +83,21 @@ describe('UsersService', () => {
       usersRepository.findOne.mockResolvedValue(undefined);
       usersRepository.create.mockReturnValue(createAccountArgs);
       usersRepository.save.mockResolvedValue(createAccountArgs);
-      verificationRepository.create.mockReturnValue({
+      verificationsRepository.create.mockReturnValue({
         user: createAccountArgs,
       });
-      verificationRepository.save.mockResolvedValue(verificationArgs);
+      verificationsRepository.save.mockResolvedValue(verificationArgs);
       const result = await service.createAccount(createAccountArgs);
       expect(usersRepository.create).toHaveBeenCalledTimes(1);
       expect(usersRepository.create).toHaveBeenCalledWith(createAccountArgs);
       expect(usersRepository.save).toHaveBeenCalledTimes(1);
       expect(usersRepository.save).toHaveBeenCalledWith(createAccountArgs);
-      expect(verificationRepository.create).toHaveBeenCalledTimes(1);
-      expect(verificationRepository.create).toHaveBeenCalledWith({
+      expect(verificationsRepository.create).toHaveBeenCalledTimes(1);
+      expect(verificationsRepository.create).toHaveBeenCalledWith({
         user: createAccountArgs,
       });
-      expect(verificationRepository.save).toHaveBeenCalledTimes(1);
-      expect(verificationRepository.save).toHaveBeenCalledWith({
+      expect(verificationsRepository.save).toHaveBeenCalledTimes(1);
+      expect(verificationsRepository.save).toHaveBeenCalledWith({
         user: createAccountArgs,
       });
       expect(mailService.sendVerificationEmail).toHaveBeenCalledTimes(1);
@@ -205,8 +205,8 @@ describe('UsersService', () => {
         verified: false,
       } as User;
       usersRepository.findOne.mockResolvedValue(null);
-      verificationRepository.create.mockReturnValue(oldUser);
-      verificationRepository.save.mockResolvedValue(verification);
+      verificationsRepository.create.mockReturnValue(oldUser);
+      verificationsRepository.save.mockResolvedValue(verification);
       await service.editUserProfile(oldUser, editProfileArgs);
 
       expect(usersRepository.findOne).toHaveBeenCalledTimes(1);
@@ -214,12 +214,12 @@ describe('UsersService', () => {
         where: { email: editProfileArgs.email },
       });
       expect(oldUser).toEqual(newUser);
-      expect(verificationRepository.create).toHaveBeenCalledTimes(1);
-      expect(verificationRepository.create).toHaveBeenCalledWith({
+      expect(verificationsRepository.create).toHaveBeenCalledTimes(1);
+      expect(verificationsRepository.create).toHaveBeenCalledWith({
         user: newUser,
       });
-      expect(verificationRepository.save).toHaveBeenCalledTimes(1);
-      expect(verificationRepository.save).toHaveBeenCalledWith(newUser);
+      expect(verificationsRepository.save).toHaveBeenCalledTimes(1);
+      expect(verificationsRepository.save).toHaveBeenCalledWith(newUser);
       expect(mailService.sendVerificationEmail).toHaveBeenCalledTimes(1);
       expect(mailService.sendVerificationEmail).toHaveBeenCalledWith(
         editProfileArgs.email,
@@ -256,9 +256,9 @@ describe('UsersService', () => {
     const verification = { id: 2, user: { id: 1 } };
 
     it('should verify email', async () => {
-      verificationRepository.findOne.mockResolvedValue(verification);
+      verificationsRepository.findOne.mockResolvedValue(verification);
       const result = await service.verifyEmail({ code });
-      expect(verificationRepository.findOne).toHaveBeenCalledWith({
+      expect(verificationsRepository.findOne).toHaveBeenCalledWith({
         where: { code },
         relations: ['user'],
       });
@@ -267,21 +267,21 @@ describe('UsersService', () => {
         verification.user.id,
         { verified: true },
       );
-      expect(verificationRepository.delete).toHaveBeenCalledTimes(1);
-      expect(verificationRepository.delete).toHaveBeenCalledWith(
+      expect(verificationsRepository.delete).toHaveBeenCalledTimes(1);
+      expect(verificationsRepository.delete).toHaveBeenCalledWith(
         verification.id,
       );
       expect(result).toEqual({ ok: true });
     });
 
     it('should fail on verification not found', async () => {
-      verificationRepository.findOne.mockResolvedValue(null);
+      verificationsRepository.findOne.mockResolvedValue(null);
       const result = await service.verifyEmail({ code });
       expect(result).toEqual({ ok: false, error: 'Incorrect code' });
     });
 
     it('should fail on exception', async () => {
-      verificationRepository.findOne.mockResolvedValue(new Error());
+      verificationsRepository.findOne.mockResolvedValue(new Error());
       const result = await service.verifyEmail({ code });
       expect(result).toEqual({ ok: false, error: 'Could not verify email.' });
     });

@@ -100,6 +100,7 @@ export class UsersService {
         if (exists) return { ok: false, error: 'Email is already taken' };
         user.email = email;
         user.verified = false;
+        await this.verificationsRepository.delete({ user: { id: user.id } });
         const { code } = await this.verificationsRepository.save(
           this.verificationsRepository.create({ user }),
         );
