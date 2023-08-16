@@ -19,6 +19,10 @@ import { JwtMiddleware } from './jwt/jwt.middleware';
 import { Verification } from './users/entities/verification.entity';
 import { MailModule } from './mail/mail.module';
 import { DatabaseModule } from './database/database.module';
+import { Category } from './restaurants/entities/category.entity';
+import { Restaurant } from './restaurants/entities/restaurant.entity';
+import { RestaurantsModule } from './restaurants/restaurants.module';
+import { AuthModule } from './auth/auth.module';
 
 const ENV = process.env.NODE_ENV;
 
@@ -57,9 +61,11 @@ const ENV = process.env.NODE_ENV;
       database: process.env.DB_NAME,
       synchronize: ENV !== 'production',
       logging: ENV === 'development',
-      entities: [User, Verification],
+      entities: [User, Verification, Category, Restaurant],
     }),
+    AuthModule,
     UsersModule,
+    RestaurantsModule,
     JwtModule.forRoot({
       secretKey: process.env.SECRET_KEY,
     }),

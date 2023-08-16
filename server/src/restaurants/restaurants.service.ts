@@ -3,39 +3,51 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
 import { Restaurant } from './entities/restaurant.entity';
-import { CreateRestaurantDto } from './dtos/create-restaurant.dto';
-import { UpdateRestaurantDto } from './dtos/update-restaurant.dto';
+import {
+  CreateRestaurantInput,
+  CreateRestaurantOutput,
+} from './dtos/create-restaurant.dto';
+import { User } from 'src/users/entities/user.entity';
+import { Category } from './entities/category.entity';
 
 @Injectable()
 export class RestaurantsService {
   constructor(
     @InjectRepository(Restaurant)
     private readonly restaurantsRepository: Repository<Restaurant>,
+
+    @InjectRepository(Category)
+    private readonly categoriesRepository: Repository<Category>,
   ) {}
-  helloService() {
-    console.log('HELLO RESTAURANTS');
-  }
-  getAll(): Promise<Restaurant[]> {
-    return this.restaurantsRepository.find();
-  }
 
-  createRestaurant(
-    createRestaurantDto: CreateRestaurantDto,
-  ): Promise<Restaurant> {
-    const newRestaurant =
-      this.restaurantsRepository.create(createRestaurantDto);
+  async createRestaurant(
+    owner: User,
+    createRestaurantInput: CreateRestaurantInput,
+  ): Promise<CreateRestaurantOutput> {
+    try {
+      const newRestaurant = this.restaurantsRepository.create(
+        createRestaurantInput,
+      );
+      newRestaurant.owner = owner;
+      const categoryName = createRestaurantInput.categoryName
+        .trim()
+        .toLowerCase();
+      const slug = categoryName.replace(/ /g, '-');
 
-    return this.restaurantsRepository.save(newRestaurant);
-  }
+      let category = await this.categoriesRepository.findOne({
+        where: { slug },
+      });
 
-  async updateRestaurant({ data, id }: UpdateRestaurantDto) {
-    const restaurant = await this.restaurantsRepository.findOne({
-      where: { id },
-    });
-    if (!restaurant) return false;
-
-    return this.restaurantsRepository.update(id, {
-      ...data,
-    });
+      if (!category) {
+        category = await this.categoriesRepository.save(
+          this.categoriesRepository.create({ slug, name: categoryName }),
+        );
+      }
+      newRestaurant.category = category;
+      await this.restaurantsRepository.save(newRestaurant);
+      return { ok: true };
+    } catch (error) {
+      return { ok: false, error: 'Could not create restaurant' };
+    }
   }
 }

@@ -13,12 +13,14 @@ import { AuthUser } from 'src/auth/auth-user.decorator';
 import { UserProfileInput, UserProfileOutput } from './dtos/user-profile.dto';
 import { EditProfileInput, EditProfileOutput } from './dtos/edit-profile.dto';
 import { VerifyEmailInput, VerifyEmailOutput } from './dtos/verify-email.dto';
+import { Roles } from 'src/auth/role.decorator';
+import { Role } from 'src/common/common.types';
 
 @Resolver(() => User)
 export class UsersResolver {
   constructor(private readonly usersService: UsersService) {}
 
-  @UseGuards(AuthGuard)
+  @Roles(Role.Owner, Role.Client, Role.Delivery)
   @Query(() => User)
   me(@AuthUser() user: User) {
     return user;
@@ -34,13 +36,13 @@ export class UsersResolver {
     return this.usersService.login(loginInput);
   }
 
-  @UseGuards(AuthGuard)
+  @Roles(Role.Client, Role.Owner, Role.Delivery)
   @Query(() => UserProfileOutput)
   userProfile(@Args() userProfileInput: UserProfileInput) {
     return this.usersService.getUserProfile(userProfileInput);
   }
 
-  @UseGuards(AuthGuard)
+  @Roles(Role.Client, Role.Owner, Role.Delivery)
   @Mutation(() => EditProfileOutput)
   editProfile(
     @AuthUser() user: User,
