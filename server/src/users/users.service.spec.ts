@@ -8,6 +8,7 @@ import { JwtService } from 'src/jwt/jwt.service';
 import { MailService } from 'src/mail/mail.service';
 import { Repository } from 'typeorm';
 import { UserProfileOutput } from './dtos/user-profile.dto';
+import { Role } from 'src/common/common.types';
 
 type MockRepository<T> = Partial<Record<keyof Repository<T>, jest.Mock>>;
 const token = '$2342.2sd324d.32dd2dsgtj2.s3';
@@ -65,7 +66,7 @@ describe('UsersService', () => {
     const createAccountArgs = {
       email: 'lalaland@gmail.com',
       password: 'lalaland',
-      role: 1,
+      role: Role.Client,
     };
     const verificationArgs = {
       user: createAccountArgs,

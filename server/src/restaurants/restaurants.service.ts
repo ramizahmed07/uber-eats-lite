@@ -8,7 +8,13 @@ import {
   CreateRestaurantOutput,
 } from './dtos/create-restaurant.dto';
 import { User } from 'src/users/entities/user.entity';
-import { Category } from './entities/category.entity';
+import {
+  EditRestaurantInput,
+  EditRestaurantOutput,
+} from './dtos/edit-restaurant.dto';
+import { DeleteRestaurantOutput } from './dtos/delete-restaurant.dto';
+import { Category } from 'src/categories/entities/category.entity';
+import { CategoriesRepository } from 'src/categories/categories.repository';
 
 @Injectable()
 export class RestaurantsService {
@@ -17,7 +23,7 @@ export class RestaurantsService {
     private readonly restaurantsRepository: Repository<Restaurant>,
 
     @InjectRepository(Category)
-    private readonly categoriesRepository: Repository<Category>,
+    private readonly categoriesRepository: CategoriesRepository,
   ) {}
 
   async createRestaurant(
@@ -29,25 +35,76 @@ export class RestaurantsService {
         createRestaurantInput,
       );
       newRestaurant.owner = owner;
-      const categoryName = createRestaurantInput.categoryName
-        .trim()
-        .toLowerCase();
-      const slug = categoryName.replace(/ /g, '-');
-
-      let category = await this.categoriesRepository.findOne({
-        where: { slug },
-      });
-
-      if (!category) {
-        category = await this.categoriesRepository.save(
-          this.categoriesRepository.create({ slug, name: categoryName }),
-        );
-      }
+      const category = await this.categoriesRepository.getOrCreate(
+        createRestaurantInput.categoryName,
+      );
       newRestaurant.category = category;
       await this.restaurantsRepository.save(newRestaurant);
       return { ok: true };
     } catch (error) {
       return { ok: false, error: 'Could not create restaurant' };
     }
+  }
+
+  async editRestaurant(
+    owner: User,
+    { id, ...editRestaurantInput }: EditRestaurantInput,
+  ): Promise<EditRestaurantOutput> {
+    try {
+      const restaurant = await this.restaurantsRepository.findOne({
+        where: { id },
+      });
+      if (!restaurant) return { ok: false, error: 'Restaurant not found' };
+      if (restaurant.ownerId !== owner.id)
+        return {
+          ok: false,
+          error: "You can't edit a restaurant that you don't own",
+        };
+
+      let category: Category = null;
+      if (editRestaurantInput.categoryName) {
+        category = await this.categoriesRepository.getOrCreate(
+          editRestaurantInput.categoryName,
+        );
+      }
+
+      await this.restaurantsRepository.save([
+        {
+          id,
+          ...editRestaurantInput,
+          ...(category && { category }),
+        },
+      ]);
+      return { ok: true };
+    } catch (error) {
+      return { ok: false, error: 'Could not edit restaurant' };
+    }
+  }
+
+  async deleteRestaurant(
+    user: User,
+    id: number,
+  ): Promise<DeleteRestaurantOutput> {
+    try {
+      const restaurant = await this.restaurantsRepository.findOne({
+        where: { id },
+      });
+      if (!restaurant) return { ok: false, error: 'Restaurant not found' };
+      if (restaurant.ownerId !== user.id)
+        return {
+          ok: false,
+          error: "You can't delete restaurant that you don't own",
+        };
+      await this.restaurantsRepository.delete(restaurant.id);
+      return { ok: true };
+    } catch (error) {
+      return { ok: false, error: 'Could not delete restaurant' };
+    }
+  }
+
+  getRestaurantCount(category: Category): Promise<number> {
+    return this.restaurantsRepository.count({
+      where: { category: { id: category.id } },
+    });
   }
 }

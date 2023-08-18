@@ -10,19 +10,17 @@ import { ConfigModule } from '@nestjs/config';
 import { GraphQLModule } from '@nestjs/graphql';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
-import { UsersModule } from './users/users.module';
-import { User } from './users/entities/user.entity';
-import { JwtModule } from './jwt/jwt.module';
 import { JwtMiddleware } from './jwt/jwt.middleware';
+import { User } from './users/entities/user.entity';
 import { Verification } from './users/entities/verification.entity';
-import { MailModule } from './mail/mail.module';
-import { DatabaseModule } from './database/database.module';
-import { Category } from './restaurants/entities/category.entity';
 import { Restaurant } from './restaurants/entities/restaurant.entity';
+import { Category } from './categories/entities/category.entity';
+import { JwtModule } from './jwt/jwt.module';
+import { MailModule } from './mail/mail.module';
 import { RestaurantsModule } from './restaurants/restaurants.module';
+import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
+import { CategoriesModule } from './categories/categories.module';
 
 const ENV = process.env.NODE_ENV;
 
@@ -63,17 +61,15 @@ const ENV = process.env.NODE_ENV;
       logging: ENV === 'development',
       entities: [User, Verification, Category, Restaurant],
     }),
-    AuthModule,
-    UsersModule,
-    RestaurantsModule,
     JwtModule.forRoot({
       secretKey: process.env.SECRET_KEY,
     }),
+    AuthModule,
+    UsersModule,
+    RestaurantsModule,
+    CategoriesModule,
     MailModule,
-    DatabaseModule,
   ],
-  controllers: [AppController],
-  providers: [AppService],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {

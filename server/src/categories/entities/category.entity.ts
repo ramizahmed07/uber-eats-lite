@@ -3,7 +3,7 @@ import { IsString } from 'class-validator';
 import { Column, Entity, OneToMany } from 'typeorm';
 
 import { CoreEntity } from 'src/common/entities/core.entity';
-import { Restaurant } from './restaurant.entity';
+import { Restaurant } from 'src/restaurants/entities/restaurant.entity';
 
 @ObjectType()
 @Entity()
