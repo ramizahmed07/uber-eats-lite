@@ -27,6 +27,6 @@ export class CategoriesResolver {
   category(
     @Args('input') categoryInput: CategoryInput,
   ): Promise<CategoryOutput> {
-    return this.categoriesService.getCategoryBySlug(categoryInput.slug);
+    return this.categoriesService.getCategoryBySlug(categoryInput);
   }
 }
