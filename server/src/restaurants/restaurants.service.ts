@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { ILike, Raw, Repository } from 'typeorm';
 
 import { Restaurant } from './entities/restaurant.entity';
 import {
@@ -15,6 +15,13 @@ import {
 import { DeleteRestaurantOutput } from './dtos/delete-restaurant.dto';
 import { Category } from 'src/categories/entities/category.entity';
 import { CategoriesRepository } from 'src/categories/categories.repository';
+import { RestaurantsInput, RestaurantsOutput } from './dtos/restaurants.dto';
+import { PAGINATION_LIMIT } from 'src/common/common.constants';
+import { RestaurantInput, RestaurantOutput } from './dtos/restaurant.dto';
+import {
+  SearchRestaurantsInput,
+  SearchRestaurantsOutput,
+} from './dtos/search-restaurants.dto';
 
 @Injectable()
 export class RestaurantsService {
@@ -25,6 +32,67 @@ export class RestaurantsService {
     @InjectRepository(Category)
     private readonly categoriesRepository: CategoriesRepository,
   ) {}
+
+  async getAllRestaurants({
+    page,
+  }: RestaurantsInput): Promise<RestaurantsOutput> {
+    try {
+      const [restaurants, totalResults] =
+        await this.restaurantsRepository.findAndCount({
+          take: PAGINATION_LIMIT,
+          skip: (page - 1) * PAGINATION_LIMIT,
+        });
+      return {
+        ok: true,
+        results: restaurants,
+        totalPages: Math.ceil(totalResults / PAGINATION_LIMIT),
+        totalResults,
+      };
+    } catch (error) {
+      return { ok: false, error: 'Could not get restaurants' };
+    }
+  }
+
+  async getRestaurantById({
+    restaurantId,
+  }: RestaurantInput): Promise<RestaurantOutput> {
+    try {
+      const restaurant = await this.restaurantsRepository.findOne({
+        where: { id: restaurantId },
+      });
+      if (!restaurant) return { ok: false, error: 'Restaurant not found' };
+
+      return {
+        ok: true,
+        restaurant,
+      };
+    } catch (error) {
+      return { ok: false, error: 'Could not get restaurant' };
+    }
+  }
+
+  async searchRestaurants({
+    page,
+    query,
+  }: SearchRestaurantsInput): Promise<SearchRestaurantsOutput> {
+    try {
+      const [restaurants, totalResults] =
+        await this.restaurantsRepository.findAndCount({
+          where: { name: ILike(`%${query}%`) },
+          take: PAGINATION_LIMIT,
+          skip: (page - 1) * PAGINATION_LIMIT,
+        });
+
+      return {
+        ok: true,
+        restaurants,
+        totalResults,
+        totalPages: Math.ceil(totalResults / 25),
+      };
+    } catch (error) {
+      return { ok: false, error: 'Could not search for restaurants' };
+    }
+  }
 
   async createRestaurant(
     owner: User,

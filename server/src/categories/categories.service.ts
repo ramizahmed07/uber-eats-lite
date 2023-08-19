@@ -4,8 +4,8 @@ import { Repository } from 'typeorm';
 
 import { Restaurant } from 'src/restaurants/entities/restaurant.entity';
 import { CategoriesRepository } from './categories.repository';
-import { CategoriesOutput } from './dto/categories.dto';
-import { CategoryInput, CategoryOutput } from './dto/category.dto';
+import { CategoriesOutput } from './dtos/categories.dto';
+import { CategoryInput, CategoryOutput } from './dtos/category.dto';
 import { Category } from './entities/category.entity';
 import { PAGINATION_LIMIT } from 'src/common/common.constants';
 import { RestaurantsService } from 'src/restaurants/restaurants.service';

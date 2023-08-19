@@ -2,8 +2,8 @@ import { Args, Parent, Query, ResolveField, Resolver } from '@nestjs/graphql';
 
 import { RestaurantsService } from 'src/restaurants/restaurants.service';
 import { CategoriesService } from './categories.service';
-import { CategoriesOutput } from './dto/categories.dto';
-import { CategoryInput, CategoryOutput } from './dto/category.dto';
+import { CategoriesOutput } from './dtos/categories.dto';
+import { CategoryInput, CategoryOutput } from './dtos/category.dto';
 import { Category } from './entities/category.entity';
 
 @Resolver(() => Category)
