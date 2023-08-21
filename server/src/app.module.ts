@@ -21,6 +21,7 @@ import { RestaurantsModule } from './restaurants/restaurants.module';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { CategoriesModule } from './categories/categories.module';
+import { Dish } from './restaurants/entities/dish.entity';
 
 const ENV = process.env.NODE_ENV;
 
@@ -59,7 +60,7 @@ const ENV = process.env.NODE_ENV;
       database: process.env.DB_NAME,
       synchronize: ENV !== 'production',
       logging: ENV === 'development',
-      entities: [User, Verification, Category, Restaurant],
+      entities: [User, Verification, Category, Restaurant, Dish],
     }),
     JwtModule.forRoot({
       secretKey: process.env.SECRET_KEY,
