@@ -1,9 +1,18 @@
-import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
+import {
+  Args,
+  Mutation,
+  Parent,
+  Query,
+  ResolveField,
+  Resolver,
+} from '@nestjs/graphql';
+
 import { AuthUser } from 'src/auth/auth-user.decorator';
 import { Roles } from 'src/auth/role.decorator';
 import { Role } from 'src/common/common.types';
 import { User } from 'src/users/entities/user.entity';
-
+import { UsersService } from 'src/users/users.service';
+import { CreateDishInput, CreateDishOutput } from './dtos/create-dish.dto';
 import {
   CreateRestaurantInput,
   CreateRestaurantOutput,
@@ -22,12 +31,22 @@ import {
   SearchRestaurantsInput,
   SearchRestaurantsOutput,
 } from './dtos/search-restaurants.dto';
+import { Dish } from './entities/dish.entity';
 import { Restaurant } from './entities/restaurant.entity';
 import { RestaurantsService } from './restaurants.service';
 
 @Resolver(() => Restaurant)
 export class RestaurantsResolver {
-  constructor(private readonly restaurantsService: RestaurantsService) {}
+  constructor(
+    private readonly restaurantsService: RestaurantsService,
+    private readonly usersService: UsersService,
+  ) {}
+
+  @ResolveField()
+  async owner(@Parent() restaurant: Restaurant) {
+    const { user } = await this.usersService.getById(restaurant.ownerId);
+    return user;
+  }
 
   @Query(() => RestaurantsOutput)
   restaurants(
@@ -81,5 +100,19 @@ export class RestaurantsResolver {
       user,
       editRestaurantInput.restaurantId,
     );
+  }
+}
+
+@Resolver(() => Dish)
+export class DishResolver {
+  constructor(private readonly restaurantsService: RestaurantsService) {}
+
+  @Roles(Role.Owner)
+  @Mutation(() => CreateDishOutput)
+  createDish(
+    @AuthUser() owner: User,
+    @Args('input') createDishInput: CreateDishInput,
+  ) {
+    return this.restaurantsService.createDish(owner, createDishInput);
   }
 }
