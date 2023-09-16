@@ -24,6 +24,8 @@ import {
 } from './dtos/search-restaurants.dto';
 import { CreateDishInput, CreateDishOutput } from './dtos/create-dish.dto';
 import { Dish } from './entities/dish.entity';
+import { EditDishInput, EditDishOutput } from './dtos/edit-dish.dto';
+import { DeleteDishInput, DeleteDishOutput } from './dtos/delete-dish.dto';
 
 @Injectable()
 export class RestaurantsService {
@@ -187,7 +189,6 @@ export class RestaurantsService {
     createDishInput: CreateDishInput,
   ): Promise<CreateDishOutput> {
     try {
-      console.log(createDishInput);
       const restaurant = await this.restaurantsRepository.findOne({
         where: { id: createDishInput.restaurantId },
       });
@@ -200,6 +201,53 @@ export class RestaurantsService {
       return { ok: true };
     } catch (error) {
       return { ok: false, error: "Couldn't create the dish" };
+    }
+  }
+
+  async editDish(
+    owner: User,
+    editDishInput: EditDishInput,
+  ): Promise<EditDishOutput> {
+    try {
+      const dish = await this.dishesRepository.findOne({
+        where: {
+          id: editDishInput.id,
+        },
+        relations: ['restaurant'],
+      });
+      if (!dish) return { ok: false, error: 'Dish not found' };
+      if (dish.restaurant.ownerId !== owner.id)
+        return { ok: false, error: 'Not authorized' };
+      await this.dishesRepository.save([
+        {
+          id: editDishInput.id,
+          ...this.dishesRepository.create(editDishInput),
+        },
+      ]);
+      return { ok: true };
+    } catch (error) {
+      return { ok: false, error: 'Could not edit the dish' };
+    }
+  }
+
+  async deleteDish(
+    owner: User,
+    { dishId }: DeleteDishInput,
+  ): Promise<DeleteDishOutput> {
+    try {
+      const dish = await this.dishesRepository.findOne({
+        where: {
+          id: dishId,
+        },
+        relations: ['restaurant'],
+      });
+      if (!dish) return { ok: false, error: 'Dish not found' };
+      if (dish.restaurant.ownerId !== owner.id)
+        return { ok: false, error: 'Not authorized' };
+      await this.dishesRepository.delete(dishId);
+      return { ok: true };
+    } catch (error) {
+      return { ok: false, error: 'Could not delete the dish' };
     }
   }
 }

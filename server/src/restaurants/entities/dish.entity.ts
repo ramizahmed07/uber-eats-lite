@@ -5,14 +5,24 @@ import { Column, Entity, ManyToOne, RelationId } from 'typeorm';
 import { CoreEntity } from 'src/common/entities/core.entity';
 import { Restaurant } from './restaurant.entity';
 
+@InputType('DishChoiceInput')
+@ObjectType()
+class DishChoice {
+  @Field(() => String)
+  name: string;
+
+  @Field(() => Number, { nullable: true })
+  extra?: number;
+}
+
 @InputType('DishOptionInput')
 @ObjectType()
 class DishOption {
   @Field(() => String)
   name: string;
 
-  @Field(() => [String], { nullable: true })
-  choices?: string[];
+  @Field(() => [DishChoice], { nullable: true })
+  choices?: DishChoice[];
 
   @Field(() => Number, { nullable: true })
   extra?: number;
