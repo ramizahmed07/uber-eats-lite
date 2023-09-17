@@ -15,6 +15,7 @@ const token = '$2342.2sd324d.32dd2dsgtj2.s3';
 
 const mockRepository = () => ({
   findOne: jest.fn(),
+  findById: jest.fn(),
   save: jest.fn(),
   create: jest.fn(),
   delete: jest.fn(),

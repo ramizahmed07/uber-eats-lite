@@ -22,6 +22,8 @@ import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { CategoriesModule } from './categories/categories.module';
 import { Dish } from './restaurants/entities/dish.entity';
+import { OrdersModule } from './orders/orders.module';
+import { Order } from './orders/entities/order.entity';
 
 const ENV = process.env.NODE_ENV;
 
@@ -60,7 +62,7 @@ const ENV = process.env.NODE_ENV;
       database: process.env.DB_NAME,
       synchronize: ENV !== 'production',
       logging: ENV === 'development',
-      entities: [User, Verification, Category, Restaurant, Dish],
+      entities: [User, Verification, Category, Restaurant, Dish, Order],
     }),
     JwtModule.forRoot({
       secretKey: process.env.SECRET_KEY,
@@ -70,6 +72,7 @@ const ENV = process.env.NODE_ENV;
     RestaurantsModule,
     CategoriesModule,
     MailModule,
+    OrdersModule,
   ],
 })
 export class AppModule implements NestModule {

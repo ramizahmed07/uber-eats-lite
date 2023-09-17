@@ -7,6 +7,7 @@ import { IsEmail, IsEnum } from 'class-validator';
 import { CoreEntity } from 'src/common/entities/core.entity';
 import { Restaurant } from 'src/restaurants/entities/restaurant.entity';
 import { Role } from 'src/common/common.types';
+import { Order } from 'src/orders/entities/order.entity';
 
 registerEnumType(Role, { name: 'Role' });
 
@@ -33,6 +34,14 @@ export class User extends CoreEntity {
   @OneToMany(() => Restaurant, (restaurant) => restaurant.owner)
   @Field(() => [Restaurant])
   restaurants: Restaurant[];
+
+  @OneToMany(() => Order, (order) => order.customer)
+  @Field(() => [Order])
+  orders: Order[];
+
+  @OneToMany(() => Order, (order) => order.rider)
+  @Field(() => [Order])
+  rides: Order[];
 
   @BeforeInsert()
   @BeforeUpdate()

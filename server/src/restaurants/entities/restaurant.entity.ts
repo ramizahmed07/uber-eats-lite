@@ -6,6 +6,7 @@ import { CoreEntity } from 'src/common/entities/core.entity';
 import { User } from 'src/users/entities/user.entity';
 import { Category } from 'src/categories/entities/category.entity';
 import { Dish } from './dish.entity';
+import { Order } from 'src/orders/entities/order.entity';
 
 @ObjectType()
 @Entity()
@@ -43,4 +44,8 @@ export class Restaurant extends CoreEntity {
   @OneToMany(() => Dish, (dish) => dish.restaurant)
   @Field(() => [Dish], { nullable: true })
   menu: Dish[];
+
+  @OneToMany(() => Order, (order) => order.restaurant)
+  @Field(() => [Order])
+  orders: Order[];
 }
