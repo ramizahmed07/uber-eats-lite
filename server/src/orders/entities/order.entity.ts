@@ -1,11 +1,24 @@
-import { Field, Float, ObjectType, registerEnumType } from '@nestjs/graphql';
-import { Column, Entity, JoinTable, ManyToMany, ManyToOne } from 'typeorm';
+import {
+  Field,
+  Float,
+  InputType,
+  ObjectType,
+  registerEnumType,
+} from '@nestjs/graphql';
+import {
+  Column,
+  Entity,
+  JoinTable,
+  ManyToMany,
+  ManyToOne,
+  RelationId,
+} from 'typeorm';
 
 import { CoreEntity } from 'src/common/entities/core.entity';
 import { User } from 'src/users/entities/user.entity';
 import { Restaurant } from 'src/restaurants/entities/restaurant.entity';
-import { Dish } from 'src/restaurants/entities/dish.entity';
-import { IsEnum } from 'class-validator';
+import { IsEnum, IsNumber } from 'class-validator';
+import { OrderItem } from './order-item.entity';
 
 export enum OrderStatus {
   Pending = 'Pending',
@@ -16,6 +29,7 @@ export enum OrderStatus {
 
 registerEnumType(OrderStatus, { name: 'OrderStatus' });
 
+@InputType('OrderInputType', { isAbstract: true })
 @ObjectType()
 @Entity()
 export class Order extends CoreEntity {
@@ -26,12 +40,18 @@ export class Order extends CoreEntity {
   @Field(() => User, { nullable: true })
   customer?: User;
 
+  @RelationId((order: Order) => order.customer)
+  customerId: number;
+
   @ManyToOne(() => User, (user) => user.rides, {
     onDelete: 'SET NULL',
     nullable: true,
   })
   @Field(() => User, { nullable: true })
   rider?: User;
+
+  @RelationId((order: Order) => order.rider)
+  riderId: number;
 
   @ManyToOne(() => Restaurant, (restaurant) => restaurant.orders, {
     onDelete: 'SET NULL',
@@ -40,16 +60,17 @@ export class Order extends CoreEntity {
   @Field(() => Restaurant, { nullable: true })
   restaurant: Restaurant;
 
-  @ManyToMany(() => Dish)
+  @ManyToMany(() => OrderItem, { onDelete: 'CASCADE' })
   @JoinTable()
-  @Field(() => [Dish])
-  dishes: Dish[];
+  @Field(() => [OrderItem])
+  items: OrderItem[];
 
-  @Column()
-  @Field(() => Float)
-  total: number;
+  @Column({ nullable: true })
+  @Field(() => Float, { nullable: true })
+  @IsNumber()
+  total?: number;
 
-  @Column({ type: 'enum', enum: OrderStatus })
+  @Column({ type: 'enum', enum: OrderStatus, default: OrderStatus.Pending })
   @Field(() => OrderStatus)
   @IsEnum(OrderStatus)
   status: OrderStatus;
