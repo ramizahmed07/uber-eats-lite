@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
 import { User } from 'src/users/entities/user.entity';
-import { Order } from './entities/order.entity';
+import { Order, OrderStatus } from './entities/order.entity';
 import { CreateOrderInput, CreateOrderOutput } from './dtos/create-order.dto';
 import { Restaurant } from 'src/restaurants/entities/restaurant.entity';
 import { OrderItem } from './entities/order-item.entity';
@@ -11,6 +11,7 @@ import { Dish } from 'src/restaurants/entities/dish.entity';
 import { GetOrdersInput, GetOrdersOutput } from './dtos/get-orders.dto';
 import { Role } from 'src/common/common.types';
 import { GetOrderInput, GetOrderOutput } from './dtos/get-order.dto';
+import { EditOrderInput, EditOrderOutput } from './dtos/edit-order.dto';
 
 @Injectable()
 export class OrdersService {
@@ -41,19 +42,22 @@ export class OrdersService {
           where: { id: item.dishId },
         });
         if (!dish) return { ok: false, error: 'Dish not found' };
-
         total += dish.price;
-
         for (const option of item.options) {
           dish.options.forEach((dishOption) => {
-            if (dishOption.name === option.name && dishOption.extra)
-              total += dishOption.extra;
-            dishOption.choices.forEach((choice) => {
-              if (choice.name === option.choice && choice.extra)
-                total += choice.extra;
-            });
+            if (dishOption.name === option.name && dishOption.extra) {
+              total += dishOption?.extra;
+            }
+
+            dishOption?.choices &&
+              dishOption?.choices.forEach((choice) => {
+                if (choice.name === option.choice && choice.extra) {
+                  total += choice.extra;
+                }
+              });
           });
         }
+
         const orderItem = await this.orderItemsRepository.save(
           this.orderItemsRepository.create({
             dish,
@@ -125,6 +129,18 @@ export class OrdersService {
     }
   }
 
+  isAuthorized(user: User, order: Order): boolean {
+    let isAuthorized = false;
+    if (user.role === Role.Client && order.customerId === user.id)
+      isAuthorized = true;
+    if (user.role === Role.Delivery && order.riderId === user.id)
+      isAuthorized = true;
+    if (user.role === Role.Owner && order.restaurant.ownerId === user.id)
+      isAuthorized = true;
+
+    return isAuthorized;
+  }
+
   async getOrder(
     customer: User,
     { id }: GetOrderInput,
@@ -136,16 +152,50 @@ export class OrdersService {
       });
       if (!order) return { ok: false, error: 'Order not found' };
 
-      if (
-        order.customerId !== customer.id &&
-        order.riderId !== customer.id &&
-        order.restaurant.ownerId !== customer.id
-      )
+      if (!this.isAuthorized(customer, order))
         return { ok: false, error: 'Not authorized' };
 
       return { ok: true, order };
     } catch (error) {
       return { ok: false, error: 'Could not get the order' };
+    }
+  }
+
+  async editOrder(
+    user: User,
+    { id, status }: EditOrderInput,
+  ): Promise<EditOrderOutput> {
+    try {
+      if (user.role === Role.Client)
+        return { ok: false, error: 'Not authorized' };
+
+      const order = await this.ordersRepository.findOne({
+        where: {
+          id,
+        },
+        relations: ['restaurant'],
+      });
+      if (!order) return { ok: false, error: 'Order not found' };
+      if (!this.isAuthorized(user, order))
+        return { ok: false, error: 'Not authorized' };
+      let canEdit = true;
+      if (user.role === Role.Owner) {
+        if (status !== OrderStatus.Cooking && status !== OrderStatus.Cooked)
+          canEdit = false;
+      } else {
+        if (status !== OrderStatus.PickedUp && status !== OrderStatus.Delivered)
+          canEdit = false;
+      }
+
+      if (!canEdit) return { ok: false, error: 'Invalid status' };
+
+      await this.ordersRepository.update(id, {
+        status,
+      });
+
+      return { ok: true };
+    } catch (error) {
+      return { ok: false, error: 'Could not edit the order' };
     }
   }
 }

@@ -5,6 +5,7 @@ import { Roles } from 'src/auth/role.decorator';
 import { Role } from 'src/common/common.types';
 import { User } from 'src/users/entities/user.entity';
 import { CreateOrderInput, CreateOrderOutput } from './dtos/create-order.dto';
+import { EditOrderInput, EditOrderOutput } from './dtos/edit-order.dto';
 import { GetOrderInput, GetOrderOutput } from './dtos/get-order.dto';
 import { GetOrdersInput, GetOrdersOutput } from './dtos/get-orders.dto';
 import { Order } from './entities/order.entity';
@@ -40,5 +41,14 @@ export class OrdersResolver {
     @Args('input') getOrderInput: GetOrderInput,
   ) {
     return this.ordersService.getOrder(customer, getOrderInput);
+  }
+
+  @Roles(Role.Client, Role.Delivery, Role.Owner)
+  @Mutation(() => EditOrderOutput)
+  editOrder(
+    @AuthUser() customer: User,
+    @Args('input') editOrderInput: EditOrderInput,
+  ) {
+    return this.ordersService.editOrder(customer, editOrderInput);
   }
 }
