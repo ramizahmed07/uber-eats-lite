@@ -1,16 +1,10 @@
 import * as Joi from 'joi';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
-import {
-  MiddlewareConsumer,
-  Module,
-  NestModule,
-  RequestMethod,
-} from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { GraphQLModule } from '@nestjs/graphql';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
-import { JwtMiddleware } from './jwt/jwt.middleware';
 import { User } from './users/entities/user.entity';
 import { Verification } from './users/entities/verification.entity';
 import { Restaurant } from './restaurants/entities/restaurant.entity';
@@ -25,6 +19,7 @@ import { Dish } from './restaurants/entities/dish.entity';
 import { OrdersModule } from './orders/orders.module';
 import { Order } from './orders/entities/order.entity';
 import { OrderItem } from './orders/entities/order-item.entity';
+import { CommonModule } from './common/common.module';
 
 const ENV = process.env.NODE_ENV;
 
@@ -32,8 +27,24 @@ const ENV = process.env.NODE_ENV;
   imports: [
     GraphQLModule.forRoot<ApolloDriverConfig>({
       driver: ApolloDriver,
+      subscriptions: {
+        'subscriptions-transport-ws': {
+          onConnect: async (connectionParams) => ({
+            token: connectionParams['X-JWT'],
+          }),
+        },
+        'graphql-ws': {
+          onConnect: async ({ connectionParams }) => {
+            /* @Todo - may cause error from client */
+            console.log('connectionParams 2.0', connectionParams);
+            return {
+              token: connectionParams['X-JWT'],
+            };
+          },
+        },
+      },
       autoSchemaFile: true,
-      context: ({ req }) => ({ user: req.user }),
+      context: ({ req }) => ({ token: req.headers['x-jwt'] }),
     }),
     ConfigModule.forRoot({
       isGlobal: true,
@@ -82,13 +93,7 @@ const ENV = process.env.NODE_ENV;
     CategoriesModule,
     MailModule,
     OrdersModule,
+    CommonModule,
   ],
 })
-export class AppModule implements NestModule {
-  configure(consumer: MiddlewareConsumer) {
-    consumer.apply(JwtMiddleware).forRoutes({
-      path: '/graphql',
-      method: RequestMethod.POST,
-    });
-  }
-}
+export class AppModule {}
