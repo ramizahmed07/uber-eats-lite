@@ -4,6 +4,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { GraphQLModule } from '@nestjs/graphql';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { ScheduleModule } from '@nestjs/schedule';
 
 import { User } from './users/entities/user.entity';
 import { Verification } from './users/entities/verification.entity';
@@ -20,6 +21,8 @@ import { OrdersModule } from './orders/orders.module';
 import { Order } from './orders/entities/order.entity';
 import { OrderItem } from './orders/entities/order-item.entity';
 import { CommonModule } from './common/common.module';
+import { PaymentsModule } from './payments/payments.module';
+import { Payment } from './payments/entities/payment.entity';
 
 const ENV = process.env.NODE_ENV;
 
@@ -82,11 +85,13 @@ const ENV = process.env.NODE_ENV;
         Dish,
         Order,
         OrderItem,
+        Payment,
       ],
     }),
     JwtModule.forRoot({
       secretKey: process.env.SECRET_KEY,
     }),
+    ScheduleModule.forRoot(),
     AuthModule,
     UsersModule,
     RestaurantsModule,
@@ -94,6 +99,7 @@ const ENV = process.env.NODE_ENV;
     MailModule,
     OrdersModule,
     CommonModule,
+    PaymentsModule,
   ],
 })
 export class AppModule {}

@@ -8,6 +8,7 @@ import { CoreEntity } from 'src/common/entities/core.entity';
 import { Restaurant } from 'src/restaurants/entities/restaurant.entity';
 import { Role } from 'src/common/common.types';
 import { Order } from 'src/orders/entities/order.entity';
+import { Payment } from 'src/payments/entities/payment.entity';
 
 registerEnumType(Role, { name: 'Role' });
 
@@ -38,6 +39,10 @@ export class User extends CoreEntity {
   @OneToMany(() => Order, (order) => order.customer)
   @Field(() => [Order])
   orders: Order[];
+
+  @OneToMany(() => Payment, (payment) => payment.user)
+  @Field(() => [Payment])
+  payments: Payment[];
 
   @OneToMany(() => Order, (order) => order.rider)
   @Field(() => [Order])

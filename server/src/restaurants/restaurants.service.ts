@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { ILike, Raw, Repository } from 'typeorm';
+import { ILike, Repository } from 'typeorm';
 
 import { Restaurant } from './entities/restaurant.entity';
 import {
