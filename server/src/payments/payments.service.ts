@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { Cron, CronExpression } from '@nestjs/schedule';
+import { LessThan, Repository } from 'typeorm';
+import { Cron, CronExpression, Interval } from '@nestjs/schedule';
 
 import { RestaurantsService } from 'src/restaurants/restaurants.service';
 import { User } from 'src/users/entities/user.entity';
@@ -64,5 +64,17 @@ export class PaymentsService {
     } catch (error) {
       return { ok: false, error: 'Could not load the payments' };
     }
+  }
+
+  @Interval(2000)
+  async checkPromotedRestaurants() {
+    const restaurants = await this.restaurantsRepository.find({
+      where: { isPromoted: true, promotedUntil: LessThan(new Date()) },
+    });
+    restaurants.forEach(async (restaurant) => {
+      restaurant.isPromoted = false;
+      restaurant.promotedUntil = null;
+      await this.restaurantsRepository.save(restaurant);
+    });
   }
 }

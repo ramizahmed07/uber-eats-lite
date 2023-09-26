@@ -48,6 +48,9 @@ export class RestaurantsService {
         await this.restaurantsRepository.findAndCount({
           take: PAGINATION_LIMIT,
           skip: (page - 1) * PAGINATION_LIMIT,
+          order: {
+            isPromoted: 'DESC',
+          },
         });
       return {
         ok: true,

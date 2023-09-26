@@ -43,6 +43,7 @@ export class CategoriesService {
         where: { category: { id: category.id } },
         take: PAGINATION_LIMIT,
         skip: PAGINATION_LIMIT * (page - 1),
+        order: { isPromoted: 'DESC' },
       });
 
       const totalResults = await this.restaurantsService.getRestaurantCount(
